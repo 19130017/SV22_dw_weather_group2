@@ -20,33 +20,36 @@ public class FTPServices {
         ftp.connect(ftpHost);
         ftp.login(userName, password);
         System.out.println("Connected to " + ftpHost + ".");
-        System.out.print(ftp.getReplyString());
-        boolean result = false;
+//        System.out.print(ftp.getReplyString());
         int reply = ftp.getReplyCode();
+        boolean result = false;
 
         if (!FTPReply.isPositiveCompletion(reply)) {
             ftp.disconnect();
             System.err.println("FTP server refused connection.");
             System.exit(1);
         }
+        // create folder remote
         if (!checkDirectoryExists(ftp, remoteFolderName)) {
             createFolder(ftp, remoteFolderName);
         }
-        result = uploadSingleFile(ftp, localFilePath, remoteFolderName + "/" + remoteFileName);
-        ftp.logout();
 
+        // upload
+        result = uploadSingleFile(ftp, localFilePath, remoteFileName);
+        ftp.logout();
+        System.out.println("Disconnected to " + ftpHost + ".");
         return result;
     }
 
-    public boolean uploadSingleFile(FTPClient ftpClient, String localFilePath, String remoteFilePath) throws IOException {
-        File localFile = new File(localFilePath);
-        InputStream inputStream = new FileInputStream(localFile);
+    public boolean uploadSingleFile(FTPClient ftpClient, String localFilePath, String remoteFileName) {
         try {
+            InputStream local = new FileInputStream(localFilePath);
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-            return ftpClient.storeFile(remoteFilePath, inputStream);
-        } finally {
-            inputStream.close();
+            return ftpClient.storeFile(remoteFileName, local);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return false;
     }
 
 

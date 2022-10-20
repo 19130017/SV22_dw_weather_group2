@@ -85,4 +85,25 @@ public class DAO {
             return false;
         }
     }
+
+    public boolean truncateStaging() {
+        try {
+            CallableStatement statement = connection.prepareCall(QUERY.STAGING.TRUNCATE_STAGING);
+            return statement.executeUpdate() == 1 ? true : false;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean loadFileIntoStaging(String fileLocalPath) {
+        try {
+            CallableStatement statement = connection.prepareCall(QUERY.STAGING.LOAD_FILE_STAGING);
+            statement.setString(1, fileLocalPath);
+            return statement.executeUpdate() != 0 ? true : false;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

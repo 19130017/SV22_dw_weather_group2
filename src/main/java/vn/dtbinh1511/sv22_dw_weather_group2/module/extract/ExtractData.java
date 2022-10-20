@@ -37,21 +37,23 @@ public class ExtractData {
             if (log == null) {
                 //step 5: create folder & file
                 FileServices fileServices = new FileServices();
-                String folderPath = StrConstants.ABS_PATH + format.getDateWithDelimited();
-                String filePath = fileServices.creatFolderAndFile(folderPath);
+                String folderLocalPath = StrConstants.ABS_PATH + format.getDateWithDelimited();
+                String fileLocalPath = fileServices.creatFolderAndFile(folderLocalPath);
                 // step 6: addLog status "ES"
                 dao.addLog(config.getId(), format.getFileName(), format.getDateCrawl(), format.getHour(), Status.EXTRACT_STARTING, StrConstants.AUTHOR);
 
                 //step 7: crawl data
-                CrawlData crawlData = new CrawlData(config.getSourcePath(), filePath);
+                CrawlData crawlData = new CrawlData(config.getSourcePath(), fileLocalPath);
                 boolean success = crawlData.crawSourceOne();
+
+                // get log
+                log = dao.getLog(format.getHour(), Status.EXTRACT_STARTING);
+
                 // step 8: check success
                 if (success) {
                     // success -> step 9: send file ftp
-                    fileServices.sendFileFTP(config.getIp(), config.getUsername(), config.getPassword(), filePath, format.getFileName(), format.getDateWithDelimited());
-
+                    fileServices.sendFileFTP(config.getIp(), config.getUsername(), config.getPassword(), fileLocalPath, format.getFileName(), format.getDateWithDelimited());
                     // step 10: update log
-                    log = dao.getLog(format.getHour(), Status.EXTRACT_STARTING);
                     dao.updateLog(log.getId(), Status.EXTRACT_READY);
                 } else {
                     // fail -> step 10: update log
@@ -70,23 +72,47 @@ public class ExtractData {
         ConnectionMySql controlDB = new ConnectionMySql(DBConstants.CONTROL);
 
         // step 2: check connection
-        Connection connection = controlDB.getConnectionDB();
-        if (connection == null) {
+        Connection connectionControl = controlDB.getConnectionDB();
+        if (connectionControl == null) {
             System.out.println("Access failed ");
             return;
         } else {
             // step 3: get config
-            DAO dao = new DAO(connection);
-            FileConfig config = dao.getConfig(StrConstants.SOURCE_NAME_1);
+            DAO daoControl = new DAO(connectionControl);
+            FileConfig config = daoControl.getConfig(StrConstants.SOURCE_NAME_1);
 
             // step 4: get log status "ER" and hourCrawl = now
             DateServices format = new DateServices();
-            FileLog log = dao.getLog(format.getHour(), Status.EXTRACT_READY);
+            FileLog log = daoControl.getLog(format.getHour(), Status.EXTRACT_READY);
 
             if (log != null) {
                 // step 5: get file ftp
                 FileServices fileServices = new FileServices();
-                String filePath = fileServices.downloadCSV(config.getIp(), config.getUsername(), config.getPassword());
+//                fileServices.downloadCSV(config.getIp(), config.getUsername(), config.getPassword(), filePath, format.getFileName(), format.getDateWithDelimited());
+                String fileLocalPath = StrConstants.ABS_PATH + format.getDateWithDelimited() + "/" + format.getFileName();
+
+                // step 6: connect staging
+                ConnectionMySql stagingDB = new ConnectionMySql(DBConstants.STAGING);
+                Connection connectionStaging = stagingDB.getConnectionDB();
+                DAO daoStaging = new DAO(connectionStaging);
+
+                if (connectionStaging == null) {
+                    System.out.println("Access failed ");
+                    return;
+                } else {
+                    // step 7: truncate staging
+                    daoStaging.truncateStaging();
+                    //step 8: load file into staging
+                    boolean success = daoStaging.loadFileIntoStaging(fileLocalPath);
+                    log = daoControl.getLog(format.getHour(), Status.EXTRACT_READY);
+                    // step 9: check success
+                    if (success) {
+                        // step 10: update log
+                        daoControl.updateLog(log.getId(), Status.EXTRACT_SUCCESSFUL);
+                    } else {
+                        daoControl.updateLog(log.getId(), Status.EXTRACT_NULL);
+                    }
+                }
             } else {
                 return;
             }

@@ -45,7 +45,7 @@ public class FileServices {
     }
 
 
-    public boolean sendFileFTP(String ip, String username, String password, String filePath, String fileName, String dateWithDelimited) throws IOException {
-        return ftpServices.sendFileFtp(ip, username, password, filePath, fileName, dateWithDelimited);
+    public boolean sendFileFTP(String ip, String username, String password, String fileLocalPath, String remoteFileName, String remoteFolderName) throws IOException {
+        return ftpServices.sendFileFtp(ip, username, password, fileLocalPath, remoteFileName, "logs/" + remoteFolderName);
     }
 }
