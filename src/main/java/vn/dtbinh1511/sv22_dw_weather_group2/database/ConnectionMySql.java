@@ -32,14 +32,20 @@ public class ConnectionMySql {
         this.url = prop.getProperty("db.url");
     }
 
-    public Connection getConnection() throws SQLException {
-        Connection connection = DriverManager.getConnection(url.concat(database), username, password);
-        if (connection != null) {
-            System.out.println("Access successful " + database + " database");
-        } else {
-            System.out.println("Access failed " + database + " database");
+    public Connection getConnectionDB() {
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(url.concat(database), username, password);
+            return connection;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
-        return connection;
+//        if (connection != null) {
+//            System.out.println("Access successful " + database + " database");
+//        } else {
+//            System.out.println("Access failed " + database + " database");
+//        }
     }
 
 }

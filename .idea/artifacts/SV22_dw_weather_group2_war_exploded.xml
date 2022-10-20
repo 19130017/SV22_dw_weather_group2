@@ -14,6 +14,8 @@
           <element id="module-output" name="SV22_dw_weather_group2" />
         </element>
         <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: mysql:mysql-connector-java:8.0.30" />
+          <element id="library" level="project" name="Maven: com.google.protobuf:protobuf-java:3.19.4" />
           <element id="library" level="project" name="Maven: jstl:jstl:1.2" />
           <element id="library" level="project" name="Maven: org.jsoup:jsoup:1.15.3" />
           <element id="library" level="project" name="Maven: commons-net:commons-net:3.8.0" />
